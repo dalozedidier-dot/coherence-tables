@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "coherence-tables"
+version = "0.1.0"
+description = "Tables plug-and-play (chimie + grammaire math) extraites des PDFs"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Daloze Didier"}]
+dependencies = ["pandas>=2.0"]
+
+[project.scripts]
+coherence-tables = "coherence_tables.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+coherence_tables = ["data/*.csv"]

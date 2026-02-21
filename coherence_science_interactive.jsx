@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 
-// ─── DATA: CHEMISTRY ELEMENTS ───────────────────────────────────────────────
+// --- DATA: CHEMISTRY ELEMENTS -----------------------------------------------
 const CHEM_SECTORS = ["EN","CHI","MAT","NUM","SAN","AGR","ENV","SPA","DEF","NUC","RES"];
 const CHEM_SECTOR_LABELS = {
   EN:"Énergie", CHI:"Chimie/Procédés", MAT:"Matériaux", NUM:"Numérique/Capteurs",
@@ -15,7 +15,7 @@ const chemElements = [
   {z:1,sym:"H",name:"Hydrogène",bloc:"S",grp:"1 (Alcalins)",util:"Convertir → piles → conversion électrochimique\nAlimenter → carburants → vecteurs énergétiques\nTransformer → chimie → transformations par réactions",epist:"Modèle atomique\nSonde → spectres → spectroscopie\nModèle → observables → cosmologie",sectors:["EN","CHI","SPA","NUM","RES"],roles:["Modèle","Sonde"],type:"MIXTE"},
   {z:2,sym:"He",name:"Hélium",bloc:"S",grp:"Gaz noble",util:"Refroidir → cryogénie → basse température\nPorter → ballons → enveloppes gonflées gaz",epist:"Système modèle → superfluidité\nModèle → états quantifiés → physique quantique",sectors:["SPA","NUM","EN","RES"],roles:["Modèle","Système modèle"],type:"MIXTE"},
   {z:3,sym:"Li",name:"Lithium",bloc:"S",grp:"1 (Alcalins)",util:"Stocker → batteries → stockage électrochimique\nStructurer → céramiques → matériaux inorganiques",epist:"Modèle → transition → phases\nModèle → mécanismes → stockage d'énergie",sectors:["EN","MAT","NUM","RES"],roles:["Modèle"],type:"TECH"},
-  {z:4,sym:"Be",name:"Béryllium",bloc:"S",grp:"2 (Alcalino-terreux)",util:"Structurer → alliages → métallurgie\nSonder → rayons X → imagerie/sonde",epist:"Sonde → atténuation → transparence X\nModèle → structure–propriété → matériaux",sectors:["MAT","NUM","DEF","SPA","RES"],roles:["Modèle","Sonde"],type:"TECH"},
+  {z:4,sym:"Be",name:"Béryllium",bloc:"S",grp:"2 (Alcalino-terreux)",util:"Structurer → alliages → métallurgie\nSonder → rayons X → imagerie/sonde",epist:"Sonde → atténuation → transparence X\nModèle → structure-propriété → matériaux",sectors:["MAT","NUM","DEF","SPA","RES"],roles:["Modèle","Sonde"],type:"TECH"},
   {z:5,sym:"B",name:"Bore",bloc:"P",grp:"13",util:"Structurer → verres (amorphes)\nContrôler → semi-conducteurs (dopage)\nAbraser → abrasifs (dureté)",epist:"Modèle → liaisons hydrures (boranes)\nTraceur → ratios isotopiques (géochimie)",sectors:["MAT","CHI","ENV","RES"],roles:["Modèle","Traceur"],type:"MIXTE"},
   {z:6,sym:"C",name:"Carbone",bloc:"P",grp:"14",util:"Structurer → diamant (dureté)\nConduire → graphite (conduction)\nConvertir → carburants (énergie chimique)",epist:"Modèle → structures allotropiques\nTraceur → ratios isotopiques (datation)",sectors:["MAT","EN","ENV","RES"],roles:["Modèle","Traceur"],type:"MIXTE"},
   {z:7,sym:"N",name:"Azote",bloc:"P",grp:"15",util:"Produire → ammoniac (fertilisants)\nRéagir → composés nitrés (explosifs)\nStabiliser → atmosphères contrôlées",epist:"Observable → flux biogéochimiques (cycle N)\nModèle → fixation (enzymes)",sectors:["AGR","CHI","ENV","RES"],roles:["Modèle","Observable"],type:"MIXTE"},
@@ -34,15 +34,15 @@ const chemElements = [
   {z:20,sym:"Ca",name:"Calcium",bloc:"S",grp:"2 (Alcalino-terreux)",util:"Construire → construction → matériaux\nRéguler → biologie → vivant",epist:"Modèle → flux messagers → signalisation",sectors:["SAN","MAT","RES"],roles:["Modèle"],type:"TECH"},
   {z:21,sym:"Sc",name:"Scandium",bloc:"D",grp:"3",util:"Structurer → alliages → métallurgie",epist:"Sonde → diffraction → cristallographie",sectors:["MAT","SPA","RES"],roles:["Sonde"],type:"MIXTE"},
   {z:22,sym:"Ti",name:"Titane",bloc:"D",grp:"4",util:"Structurer → alliages → métallurgie\nIntégrer → implants → biocompatibilité",epist:"Observable → contrainte/déformation → résistance mécanique",sectors:["MAT","SAN","SPA","DEF","RES"],roles:["Observable"],type:"TECH"},
-  {z:23,sym:"V",name:"Vanadium",bloc:"D",grp:"5",util:"Structurer → aciers → alliages Fe–C",epist:"Sonde → cycles redox → catalyse",sectors:["MAT","CHI","EN","RES"],roles:["Sonde"],type:"TECH"},
+  {z:23,sym:"V",name:"Vanadium",bloc:"D",grp:"5",util:"Structurer → aciers → alliages Fe-C",epist:"Sonde → cycles redox → catalyse",sectors:["MAT","CHI","EN","RES"],roles:["Sonde"],type:"TECH"},
   {z:24,sym:"Cr",name:"Chrome",bloc:"D",grp:"6",util:"Structurer → aciers inox → passivation",epist:"Observable → valences → états d'oxydation",sectors:["MAT","CHI","DEF","RES"],roles:["Observable"],type:"TECH"},
-  {z:25,sym:"Mn",name:"Manganèse",bloc:"D",grp:"7",util:"Structurer → aciers → alliages Fe–C",epist:"Sonde → cycles redox → catalyse",sectors:["MAT","CHI","RES"],roles:["Sonde"],type:"TECH"},
-  {z:26,sym:"Fe",name:"Fer",bloc:"D",grp:"8",util:"Structurer → aciers → alliages Fe–C",epist:"Sonde → ordre magnétique → magnétisme\nTraceur → signatures → géophysique",sectors:["MAT","ENV","EN","RES"],roles:["Sonde","Traceur"],type:"TECH"},
+  {z:25,sym:"Mn",name:"Manganèse",bloc:"D",grp:"7",util:"Structurer → aciers → alliages Fe-C",epist:"Sonde → cycles redox → catalyse",sectors:["MAT","CHI","RES"],roles:["Sonde"],type:"TECH"},
+  {z:26,sym:"Fe",name:"Fer",bloc:"D",grp:"8",util:"Structurer → aciers → alliages Fe-C",epist:"Sonde → ordre magnétique → magnétisme\nTraceur → signatures → géophysique",sectors:["MAT","ENV","EN","RES"],roles:["Sonde","Traceur"],type:"TECH"},
   {z:27,sym:"Co",name:"Cobalt",bloc:"D",grp:"9",util:"Stocker → batteries → stockage\nProduire → aimants → magnétique",epist:"Traceur → désintégrations → radio-isotopes",sectors:["EN","NUM","SAN","RES"],roles:["Traceur"],type:"TECH"},
   {z:28,sym:"Ni",name:"Nickel",bloc:"D",grp:"10",util:"Structurer → alliages → métallurgie",epist:"Observable → Catalyse",sectors:["MAT","CHI","EN","RES"],roles:["Observable"],type:"TECH"},
   {z:29,sym:"Cu",name:"Cuivre",bloc:"D",grp:"11",util:"Conduire → conducteurs → transport électrique/thermique",epist:"Sonde → potentiel/impédance → électrochimie",sectors:["NUM","EN","CHI","RES"],roles:["Sonde"],type:"TECH"},
   {z:30,sym:"Zn",name:"Zinc",bloc:"D",grp:"12",util:"Protéger → galvanisation → anticorrosion",epist:"Modèle → sites métalliques → métalloprotéines",sectors:["MAT","SAN","RES"],roles:["Modèle"],type:"TECH"},
-  {z:31,sym:"Ga",name:"Gallium",bloc:"P",grp:"13",util:"Contrôler → semi-conducteurs (III–V, LED)\nMesurer → thermométrie",epist:"Observable → bande interdite (optoélectronique)\nModèle → phases eutectiques",sectors:["NUM","MAT","RES"],roles:["Modèle","Observable"],type:"MIXTE"},
+  {z:31,sym:"Ga",name:"Gallium",bloc:"P",grp:"13",util:"Contrôler → semi-conducteurs (III-V, LED)\nMesurer → thermométrie",epist:"Observable → bande interdite (optoélectronique)\nModèle → phases eutectiques",sectors:["NUM","MAT","RES"],roles:["Modèle","Observable"],type:"MIXTE"},
   {z:32,sym:"Ge",name:"Germanium",bloc:"P",grp:"14",util:"Contrôler → semi-conducteurs (transistors)\nTransmettre → optique infrarouge",epist:"Observable → bande interdite\nContrôler → dopage",sectors:["NUM","MAT","RES"],roles:["Observable"],type:"MIXTE"},
   {z:33,sym:"As",name:"Arsenic",bloc:"P",grp:"15",util:"Composer → semi-conducteurs (GaAs)\nExploiter → toxicité (historique)",epist:"Contrôler → impuretés (dopage)\nObservable → mécanismes cellulaires",sectors:["MAT","SAN","RES"],roles:["Observable"],type:"MIXTE"},
   {z:34,sym:"Se",name:"Sélénium",bloc:"P",grp:"16",util:"Détecter → photoconductivité\nModifier → verre\nRéguler → oligoélément",epist:"Observable → bande interdite\nContrainte → seuils (toxicité)",sectors:["NUM","MAT","SAN","RES"],roles:["Contrainte","Observable"],type:"MIXTE"},
@@ -55,11 +55,11 @@ const chemElements = [
   {z:41,sym:"Nb",name:"Niobium",bloc:"D",grp:"5",util:"Transporter → supraconducteurs → résistance nulle",epist:"Modèle → propriétés quantiques",sectors:["EN","NUM","MAT","RES"],roles:["Modèle"],type:"TECH"},
   {z:42,sym:"Mo",name:"Molybdène",bloc:"D",grp:"6",util:"Catalyser → contrôle cinétique\nStructurer → alliages",epist:"Modèle → catalyse → enzymes/biochimie",sectors:["CHI","MAT","SAN","RES"],roles:["Modèle"],type:"TECH"},
   {z:43,sym:"Tc",name:"Technétium",bloc:"D",grp:"7",util:"Imager → imagerie médicale",epist:"Traceur → production artificielle",sectors:["SAN","NUM","RES"],roles:["Traceur"],type:"TECH"},
-  {z:44,sym:"Ru",name:"Ruthénium",bloc:"D",grp:"8",util:"Catalyser → catalyse → contrôle cinétique",epist:"Modèle → complexes métal–C → organométallique",sectors:["CHI","EN","RES"],roles:["Modèle"],type:"TECH"},
+  {z:44,sym:"Ru",name:"Ruthénium",bloc:"D",grp:"8",util:"Catalyser → catalyse → contrôle cinétique",epist:"Modèle → complexes métal-C → organométallique",sectors:["CHI","EN","RES"],roles:["Modèle"],type:"TECH"},
   {z:45,sym:"Rh",name:"Rhodium",bloc:"D",grp:"9",util:"Catalyser → catalyse → contrôle cinétique",epist:"Modèle → vitesses → cinétique",sectors:["CHI","EN","RES"],roles:["Modèle"],type:"TECH"},
   {z:46,sym:"Pd",name:"Palladium",bloc:"D",grp:"10",util:"Catalyser → catalyse → contrôle cinétique",epist:"Observable → ajout d'H → hydrogénation",sectors:["CHI","EN","RES"],roles:["Observable"],type:"TECH"},
   {z:47,sym:"Ag",name:"Argent",bloc:"D",grp:"11",util:"Enregistrer → photographie\nInterfacer → électronique",epist:"Observable → Optique\nObservable → plasmonique",sectors:["NUM","SAN","RES"],roles:["Observable"],type:"TECH"},
-  {z:48,sym:"Cd",name:"Cadmium",bloc:"D",grp:"12",util:"Stocker → batteries → stockage",epist:"Contrainte → dose–réponse → toxicologie",sectors:["EN","SAN","ENV","RES"],roles:["Contrainte"],type:"TECH"},
+  {z:48,sym:"Cd",name:"Cadmium",bloc:"D",grp:"12",util:"Stocker → batteries → stockage",epist:"Contrainte → dose-réponse → toxicologie",sectors:["EN","SAN","ENV","RES"],roles:["Contrainte"],type:"TECH"},
   {z:49,sym:"In",name:"Indium",bloc:"P",grp:"13",util:"Interfacer → écrans tactiles\nAssembler → soudures",epist:"Contrôler/Observable → dopage\nObservable → bandes optoélectroniques",sectors:["NUM","MAT","RES"],roles:["Observable"],type:"MIXTE"},
   {z:50,sym:"Sn",name:"Étain",bloc:"P",grp:"14",util:"Assembler → soudures\nProtéger → revêtements",epist:"Système modèle → transition allotropique\nObservable → conductivité",sectors:["MAT","CHI","RES"],roles:["Observable","Système modèle"],type:"MIXTE"},
   {z:51,sym:"Sb",name:"Antimoine",bloc:"P",grp:"15",util:"Structurer → alliages (durcissement Pb)\nRetarder → flamme",epist:"Observable → propriétés électroniques\nModèle → alliages",sectors:["MAT","CHI","RES"],roles:["Modèle","Observable"],type:"MIXTE"},
@@ -89,7 +89,7 @@ const chemElements = [
   {z:75,sym:"Re",name:"Rhénium",bloc:"D",grp:"7",util:"Structurer → superalliages → haute T",epist:"Contrainte → T élevée → chimie",sectors:["MAT","SPA","DEF","CHI","RES"],roles:["Contrainte"],type:"TECH"},
   {z:76,sym:"Os",name:"Osmium",bloc:"D",grp:"8",util:"Alliages durs → haute dureté/usure",epist:"Observable → Densité extrême",sectors:["MAT","DEF","RES"],roles:["Observable"],type:"TECH"},
   {z:77,sym:"Ir",name:"Iridium",bloc:"D",grp:"9",util:"Interfacer → électrodes → conversion/mesure",epist:"Traceur → signatures → impacts",sectors:["NUM","ENV","RES"],roles:["Traceur"],type:"TECH"},
-  {z:78,sym:"Pt",name:"Platine",bloc:"D",grp:"10",util:"Catalyser → catalyse → contrôle cinétique\nJoaillerie → ornemental",epist:"Modèle → complexes métal–C → organométallique",sectors:["CHI","EN","SAN","RES"],roles:["Modèle"],type:"TECH"},
+  {z:78,sym:"Pt",name:"Platine",bloc:"D",grp:"10",util:"Catalyser → catalyse → contrôle cinétique\nJoaillerie → ornemental",epist:"Modèle → complexes métal-C → organométallique",sectors:["CHI","EN","SAN","RES"],roles:["Modèle"],type:"TECH"},
   {z:79,sym:"Au",name:"Or",bloc:"D",grp:"11",util:"Interfacer → électronique\nFinance → réserve/actif",epist:"Modèle → surface/taille → nanoparticules\nContrainte → persistance → stabilité",sectors:["NUM","SAN","CHI","RES"],roles:["Contrainte","Modèle"],type:"TECH"},
   {z:80,sym:"Hg",name:"Mercure",bloc:"D",grp:"12",util:"Mesurer → thermomètres → température",epist:"Système modèle → métal liquide → fluides",sectors:["NUM","SAN","ENV","RES"],roles:["Système modèle"],type:"TECH"},
   {z:81,sym:"Tl",name:"Thallium",bloc:"P",grp:"13",util:"Structurer → verres optiques\nExploiter → toxicité (historique)",epist:"Observable → états d'oxydation (+1/+3)\nSonde → lignes atomiques",sectors:["MAT","SAN","RES"],roles:["Observable","Sonde"],type:"MIXTE"},
@@ -132,7 +132,7 @@ const chemElements = [
   {z:118,sym:"Og",name:"Oganesson",bloc:"P",grp:"18",util:"Produire → observables (recherche)",epist:"Contrainte → instabilité",sectors:["RES"],roles:["Contrainte"],type:"EPIST"},
 ];
 
-// ─── DATA: MATH SYMBOLS ────────────────────────────────────────────────────
+// --- DATA: MATH SYMBOLS ----------------------------------------------------
 const MATH_SECTORS = ["LOG","ENS","FON","LIN","ANA","PROB","INFO","GRA","OPT","DYN","META"];
 const MATH_SECTOR_LABELS = {
   LOG:"Logique & preuve", ENS:"Ensembles", FON:"Fonctions/opérateurs", LIN:"Algèbre linéaire",
@@ -174,7 +174,7 @@ const mathSymbols = [
   {z:84,sym:"τ",name:"Temps de rupture",bloc:"DYN",grp:"Rupture",util:"Localiser → rupture → τ",epist:"Sonde → shift de régime → détection",sectors:["DYN"],roles:["SON"]},
 ];
 
-// ─── COLOR PALETTE ──────────────────────────────────────────────────────────
+// --- COLOR PALETTE ----------------------------------------------------------
 const BLOC_COLORS = {S:"#3b82f6",P:"#10b981",D:"#f59e0b",F:"#ef4444",
   LOG:"#6366f1",ENS:"#8b5cf6",FON:"#a855f7",LIN:"#ec4899",ANA:"#f43f5e",
   PROB:"#f97316",INFO:"#eab308",GRA:"#22c55e",OPT:"#14b8a6",DYN:"#06b6d4",META:"#64748b"};
@@ -184,7 +184,7 @@ const TYPE_COLORS = {TECH:"#3b82f6",MIXTE:"#a855f7",EPIST:"#ef4444"};
 const SECTOR_COLORS_CHEM = {EN:"#f59e0b",CHI:"#10b981",MAT:"#6366f1",NUM:"#3b82f6",SAN:"#ef4444",AGR:"#22c55e",ENV:"#14b8a6",SPA:"#06b6d4",DEF:"#f97316",NUC:"#ec4899",RES:"#64748b"};
 const SECTOR_COLORS_MATH = {LOG:"#6366f1",ENS:"#8b5cf6",FON:"#a855f7",LIN:"#ec4899",ANA:"#f43f5e",PROB:"#f97316",INFO:"#eab308",GRA:"#22c55e",OPT:"#14b8a6",DYN:"#06b6d4",META:"#64748b"};
 
-// ─── COMPONENTS ─────────────────────────────────────────────────────────────
+// --- COMPONENTS -------------------------------------------------------------
 const Pill = ({label, color, small}) => (
   <span style={{
     display:"inline-block", padding: small ? "1px 6px" : "2px 8px",
@@ -219,7 +219,7 @@ const CellText = ({text}) => (
   </div>
 );
 
-// ─── MAIN APP ───────────────────────────────────────────────────────────────
+// --- MAIN APP ---------------------------------------------------------------
 export default function App() {
   const [tab, setTab] = useState("chem");
   const [view, setView] = useState("table");
@@ -308,7 +308,7 @@ export default function App() {
               WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"
             }}>Cohérence interne de la science expérimentale</h1>
             <p style={{margin:"4px 0 0", fontSize:12, color:"#64748b"}}>
-              Daloze Didier — Tableaux normalisés · Navigation interactive
+              Daloze Didier - Tableaux normalisés · Navigation interactive
             </p>
           </div>
           <div style={{display:"flex", gap:6}}>
@@ -339,15 +339,15 @@ export default function App() {
         <div style={{background:"#111827", borderBottom:"1px solid #1e293b", padding:"16px 24px"}}>
           <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:16, fontSize:12, lineHeight:"18px"}}>
             <div>
-              <h3 style={{margin:"0 0 8px", fontSize:13, color:"#60a5fa"}}>Tableau 1 — Global normalisé</h3>
+              <h3 style={{margin:"0 0 8px", fontSize:13, color:"#60a5fa"}}>Tableau 1 - Global normalisé</h3>
               <p style={{color:"#94a3b8", margin:0}}>Table canonique : couverture maximale, format stable. Base pour comparaison, tri, extension. Chaque ligne = unité comparable via le triptyque Utilisation / Usage épistémique / Multisecteurs.</p>
             </div>
             <div>
-              <h3 style={{margin:"0 0 8px", fontSize:13, color:"#a78bfa"}}>Tableau 2 — Extrait Bloc P</h3>
-              <p style={{color:"#94a3b8", margin:0}}>Extrait focal (groupes 13–18). Test de robustesse : semi-conducteurs, halogènes, gaz nobles, superlourds. Vérifie que le gabarit verbe-first / rôle-first reste stable.</p>
+              <h3 style={{margin:"0 0 8px", fontSize:13, color:"#a78bfa"}}>Tableau 2 - Extrait Bloc P</h3>
+              <p style={{color:"#94a3b8", margin:0}}>Extrait focal (groupes 13-18). Test de robustesse : semi-conducteurs, halogènes, gaz nobles, superlourds. Vérifie que le gabarit verbe-first / rôle-first reste stable.</p>
             </div>
             <div>
-              <h3 style={{margin:"0 0 8px", fontSize:13, color:"#f472b6"}}>Tableau 3 — Vue rapide (diagnostic)</h3>
+              <h3 style={{margin:"0 0 8px", fontSize:13, color:"#f472b6"}}>Tableau 3 - Vue rapide (diagnostic)</h3>
               <p style={{color:"#94a3b8", margin:0}}>Projection basse dimension. Détecte : sous-typage (nan), pollution de colonnes, hétérogénéité lexicale, densité sectorielle anormale.</p>
             </div>
           </div>
@@ -453,7 +453,7 @@ export default function App() {
         {view === "matrix" && (
           <div style={{overflowX:"auto", marginTop:12}}>
             <h3 style={{fontSize:14,fontWeight:700,color:"#94a3b8",marginBottom:8}}>
-              Matrice d'incidence — {isChem ? "Éléments × Secteurs" : "Symboles × Secteurs"}
+              Matrice d'incidence - {isChem ? "Éléments × Secteurs" : "Symboles × Secteurs"}
             </h3>
             <table style={{borderCollapse:"collapse",fontSize:11}}>
               <thead>

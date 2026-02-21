@@ -1,28 +1,21 @@
-# coherence-tables
+# Démo HTML (GitHub Pages)
 
-Tables "plug-and-play" (chimie + grammaire math) extraites des PDFs.
+Ce dossier contient une démo autonome (sans bundler) pour afficher `coherence_science_interactive.jsx`
+directement sur GitHub Pages.
 
-## Installation (editable)
+## Contenu
+- `docs/index.html` : page GitHub Pages
+- `docs/app.jsx` : composant React adapté pour Babel Standalone (pas d'import/export)
 
-```bash
-pip install -e .
-```
+## Mise en ligne sur GitHub Pages
+1) Copie le dossier `docs/` à la racine de ton repo GitHub
+2) GitHub → Settings → Pages
+   - Source: Deploy from a branch
+   - Branch: main
+   - Folder: /docs
+3) URL attendue:
+   https://<user>.github.io/<repo>/
 
-## Usage rapide
-
-```python
-from coherence_tables import load_chemical_elements, get_element_by_z, filter_elements_by_sector
-
-df = load_chemical_elements()
-h = get_element_by_z(1)
-en = filter_elements_by_sector("EN")
-```
-
-## CLI
-
-```bash
-coherence-tables element --z 1
-coherence-tables elements-by-sector --sector EN
-coherence-tables math --z 60
-coherence-tables math-by-sector --sector ANA
-```
+## Notes
+- Cette approche utilise Babel dans le navigateur: parfaite pour démo, pas pour production.
+- Si tu veux une version "pro", on passe à Vite + build.

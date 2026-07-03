@@ -178,50 +178,360 @@ const mathSymbols = [
   {z:84,sym:"τ",name:"Temps de rupture",bloc:"DYN",grp:"Rupture",util:"Localiser → rupture → τ",epist:"Sonde → shift de régime → détection",sectors:["DYN"],roles:["SON"]},
 ];
 
-// ─── COLOR PALETTE ──────────────────────────────────────────────────────────
-const BLOC_COLORS = {S:"#3b82f6",P:"#10b981",D:"#f59e0b",F:"#ef4444",
-  LOG:"#6366f1",ENS:"#8b5cf6",FON:"#a855f7",LIN:"#ec4899",ANA:"#f43f5e",
-  PROB:"#f97316",INFO:"#eab308",GRA:"#22c55e",OPT:"#14b8a6",DYN:"#06b6d4",META:"#64748b"};
+// ─── COLOR PALETTE / ORI-C DESIGN SYSTEM ────────────────────────────────────
+const ORIC = {
+  glow: "#4defa8",
+  glowSoft: "rgba(77,239,168,.28)",
+  gold: "#ffc97a",
+  blue: "#7ed9ff",
+  violet: "#d3a1ff",
+  coral: "#ff9e8a",
+  ink: "#030a07",
+  panel: "rgba(133,231,180,.055)",
+  panelStrong: "rgba(133,231,180,.085)",
+  border: "rgba(141,235,189,.18)",
+  text: "#edf7f1",
+  muted: "#93b2a2",
+  subtle: "#5e7a6d"
+};
 
-const TYPE_COLORS = {TECH:"#3b82f6",MIXTE:"#a855f7",EPIST:"#ef4444"};
+const BLOC_COLORS = {
+  S: "#7ed9ff", P: "#4defa8", D: "#ffc97a", F: "#ff9e8a",
+  LOG: "#d3a1ff", ENS: "#a9b4ff", FON: "#d3a1ff", LIN: "#ff8ec7", ANA: "#ff9e8a",
+  PROB: "#ffc97a", INFO: "#e8d48a", GRA: "#8ae68a", OPT: "#4defa8", DYN: "#7ed9ff", META: "#93b2a2"
+};
+const TYPE_COLORS = { TECH: "#7ed9ff", MIXTE: "#d3a1ff", EPIST: "#ffc97a" };
+const SECTOR_COLORS_CHEM = { EN: "#ffc97a", CHI: "#4defa8", MAT: "#a9b4ff", NUM: "#7ed9ff", SAN: "#ff9e8a", AGR: "#8ae68a", ENV: "#64e0c3", SPA: "#8ac4ff", DEF: "#ffb37a", NUC: "#ff8ec7", RES: "#93b2a2" };
+const SECTOR_COLORS_MATH = { LOG: "#d3a1ff", ENS: "#a9b4ff", FON: "#c9a1ff", LIN: "#ff8ec7", ANA: "#ff9e8a", PROB: "#ffc97a", INFO: "#e8d48a", GRA: "#8ae68a", OPT: "#4defa8", DYN: "#7ed9ff", META: "#93b2a2" };
 
-const SECTOR_COLORS_CHEM = {EN:"#f59e0b",CHI:"#10b981",MAT:"#6366f1",NUM:"#3b82f6",SAN:"#ef4444",AGR:"#22c55e",ENV:"#14b8a6",SPA:"#06b6d4",DEF:"#f97316",NUC:"#ec4899",RES:"#64748b"};
-const SECTOR_COLORS_MATH = {LOG:"#6366f1",ENS:"#8b5cf6",FON:"#a855f7",LIN:"#ec4899",ANA:"#f43f5e",PROB:"#f97316",INFO:"#eab308",GRA:"#22c55e",OPT:"#14b8a6",DYN:"#06b6d4",META:"#64748b"};
+const ALL_ROLE_LABELS = {
+  ...CHEM_ROLE_CODES,
+  ...MATH_ROLE_LABELS,
+  "Contrainte": "Contrainte",
+  "Modèle": "Modèle",
+  "Observable": "Observable",
+  "Sonde": "Sonde",
+  "Standard": "Standard",
+  "Système modèle": "Système modèle",
+  "Traceur": "Traceur"
+};
+
+function roleLabel(role) {
+  return ALL_ROLE_LABELS[role] || role;
+}
+
+function compactLabel(label, max = 18) {
+  if (!label) return "";
+  return label.length > max ? label.slice(0, max - 1) + "…" : label;
+}
+
+function includesText(value, needle) {
+  return String(value || "").toLowerCase().includes(needle);
+}
+
+function itemSearchBlob(item, sectorLabels) {
+  return [
+    item.z, item.sym, item.name, item.bloc, item.grp, item.type,
+    item.util, item.epist,
+    ...(item.sectors || []), ...(item.sectors || []).map(s => sectorLabels[s]),
+    ...(item.roles || []), ...(item.roles || []).map(roleLabel)
+  ].join(" ").toLowerCase();
+}
+
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text);
+  }
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.position = "fixed";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand("copy");
+  document.body.removeChild(ta);
+  return Promise.resolve();
+}
 
 // ─── COMPONENTS ─────────────────────────────────────────────────────────────
-const Pill = ({label, color, small}) => (
-  <span style={{
-    display:"inline-block", padding: small ? "1px 6px" : "2px 8px",
-    borderRadius:999, fontSize: small ? 10 : 11, fontWeight:600,
-    background:`${color}18`, color, border:`1px solid ${color}40`,
-    marginRight:4, marginBottom:2, lineHeight:"16px", whiteSpace:"nowrap"
-  }}>{label}</span>
+const Pill = ({ children, color = ORIC.glow, muted = false, title }) => (
+  <span className={muted ? "pill pill-muted" : "pill"} title={title || children} style={{ "--pill": color }}>
+    {children}
+  </span>
 );
 
-const FilterBar = ({label, options, selected, onToggle, colorMap}) => (
-  <div style={{marginBottom:8}}>
-    <span style={{fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:1,marginRight:8}}>{label}</span>
-    {options.map(o => {
-      const active = selected.includes(o);
-      const c = colorMap?.[o] || "#64748b";
-      return (
-        <button key={o} onClick={() => onToggle(o)} style={{
-          display:"inline-block", padding:"2px 8px", borderRadius:999,
-          fontSize:11, fontWeight:600, marginRight:4, marginBottom:2,
-          cursor:"pointer", border:`1px solid ${active ? c : "#334155"}`,
-          background: active ? `${c}20` : "transparent",
-          color: active ? c : "#64748b", transition:"all .15s"
-        }}>{o}</button>
-      );
-    })}
+const SegmentButton = ({ active, children, onClick }) => (
+  <button className={active ? "segment active" : "segment"} onClick={onClick} type="button">
+    {children}
+  </button>
+);
+
+const FilterChip = ({ active, label, color, onClick, title }) => (
+  <button
+    type="button"
+    className={active ? "filter-chip active" : "filter-chip"}
+    onClick={onClick}
+    title={title || label}
+    style={{ "--chip": color || ORIC.glow }}
+  >
+    {label}
+  </button>
+);
+
+const FilterGroup = ({ title, options, selected, onToggle, colorMap, labels }) => (
+  <div className="filter-group">
+    <div className="filter-title">{title}</div>
+    <div className="filter-list">
+      {options.map(opt => {
+        const label = labels?.[opt] || opt;
+        return (
+          <FilterChip
+            key={opt}
+            active={selected.includes(opt)}
+            label={compactLabel(label, 22)}
+            title={label}
+            color={colorMap?.[opt] || ORIC.glow}
+            onClick={() => onToggle(opt)}
+          />
+        );
+      })}
+    </div>
   </div>
 );
 
-const CellText = ({text}) => (
-  <div style={{fontSize:12, lineHeight:"17px", whiteSpace:"pre-wrap"}}>
-    {text.split("\n").map((l,i) => <div key={i} style={{marginBottom:2}}>{l}</div>)}
+const LineText = ({ text }) => (
+  <div className="line-text">
+    {String(text || "").split("\n").filter(Boolean).map((line, i) => <p key={i}>{line}</p>)}
   </div>
 );
+
+const MetricCard = ({ label, value, accent = ORIC.glow }) => (
+  <div className="metric-card" style={{ "--accent": accent }}>
+    <strong>{value}</strong>
+    <span>{label}</span>
+  </div>
+);
+
+const ActiveFilters = ({ filters, onClear }) => {
+  const active = filters.filter(f => f.count > 0);
+  if (!active.length) return null;
+  return (
+    <div className="active-filters">
+      {active.map(f => <span key={f.label}>{f.label} : {f.count}</span>)}
+      <button type="button" onClick={onClear}>Réinitialiser</button>
+    </div>
+  );
+};
+
+const DetailPanel = ({ item, isChem, sectorLabels, sectorColors }) => {
+  if (!item) {
+    return (
+      <aside className="detail-panel empty">
+        <div className="detail-orb" />
+        <h3>Sélectionnez une ligne</h3>
+        <p>La fiche détail affiche la fonction utile, la valeur épistémique, les secteurs et les rôles associés.</p>
+      </aside>
+    );
+  }
+  const blocColor = BLOC_COLORS[item.bloc] || ORIC.glow;
+  return (
+    <aside className="detail-panel active" style={{ "--detail": blocColor }}>
+      <div className="detail-topline">
+        <span>#{item.z}</span>
+        <span>{isChem ? "élément chimique" : "symbole mathématique"}</span>
+      </div>
+      <div className="detail-symbol">{item.sym}</div>
+      <h3>{item.name}</h3>
+      <p className="detail-meta">Bloc <b>{item.bloc}</b> · Groupe <b>{item.grp}</b>{isChem ? <> · Type <b>{item.type}</b></> : null}</p>
+      <div className="detail-section">
+        <h4>Utilisation opératoire</h4>
+        <LineText text={item.util} />
+      </div>
+      <div className="detail-section">
+        <h4>Lecture épistémique</h4>
+        <LineText text={item.epist} />
+      </div>
+      <div className="detail-section">
+        <h4>Secteurs</h4>
+        <div className="pill-row">
+          {item.sectors.map(s => <Pill key={s} color={sectorColors[s]} title={sectorLabels[s]}>{s}</Pill>)}
+        </div>
+      </div>
+      <div className="detail-section">
+        <h4>Rôles</h4>
+        <div className="pill-row">
+          {item.roles.map(r => <Pill key={r} color={ORIC.violet}>{roleLabel(r)}</Pill>)}
+        </div>
+      </div>
+    </aside>
+  );
+};
+
+function TableView({ rows, selected, setSelected, isChem, sectorLabels, sectorColors, sortKey, setSortKey, sortAsc, setSortAsc }) {
+  const header = (key, label) => (
+    <button
+      type="button"
+      className={sortKey === key ? "sort-head active" : "sort-head"}
+      onClick={() => {
+        if (sortKey === key) setSortAsc(!sortAsc);
+        else { setSortKey(key); setSortAsc(true); }
+      }}
+    >
+      {label}<span>{sortKey === key ? (sortAsc ? "↑" : "↓") : ""}</span>
+    </button>
+  );
+
+  return (
+    <div className="table-shell">
+      <table className="oric-table">
+        <thead>
+          <tr>
+            <th>{header("z", "N°")}</th>
+            <th>{header("sym", "Symbole")}</th>
+            <th>{header("name", "Nom")}</th>
+            <th>{header("bloc", "Bloc")}</th>
+            <th>Usage</th>
+            <th>Lecture</th>
+            <th>Secteurs</th>
+            <th>Rôles</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(item => {
+            const active = selected?.z === item.z && selected?.sym === item.sym && selected?.name === item.name;
+            const blocColor = BLOC_COLORS[item.bloc] || ORIC.glow;
+            return (
+              <tr key={`${item.z}-${item.sym}-${item.name}`} className={active ? "selected" : ""} onClick={() => setSelected(item)}>
+                <td className="num">{item.z}</td>
+                <td><span className="symbol-badge" style={{ "--symbol": blocColor }}>{item.sym}</span></td>
+                <td>
+                  <strong>{item.name}</strong>
+                  <small>{item.grp}{isChem && item.type ? ` · ${item.type}` : ""}</small>
+                </td>
+                <td><Pill color={blocColor}>{item.bloc}</Pill></td>
+                <td className="text-cell"><LineText text={item.util} /></td>
+                <td className="text-cell"><LineText text={item.epist} /></td>
+                <td>
+                  <div className="pill-row compact">
+                    {item.sectors.map(s => <Pill key={s} color={sectorColors[s]} title={sectorLabels[s]}>{s}</Pill>)}
+                  </div>
+                </td>
+                <td>
+                  <div className="pill-row compact">
+                    {item.roles.map(r => <Pill key={r} color={ORIC.violet}>{roleLabel(r)}</Pill>)}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {!rows.length && <div className="empty-results">Aucun résultat avec ces filtres.</div>}
+    </div>
+  );
+}
+
+function CardView({ rows, selected, setSelected, sectorLabels, sectorColors }) {
+  return (
+    <div className="cards-grid">
+      {rows.map(item => {
+        const blocColor = BLOC_COLORS[item.bloc] || ORIC.glow;
+        const active = selected?.z === item.z && selected?.sym === item.sym && selected?.name === item.name;
+        return (
+          <article key={`${item.z}-${item.sym}-${item.name}`} className={active ? "mini-card active" : "mini-card"} onClick={() => setSelected(item)} style={{ "--card": blocColor }}>
+            <div className="mini-head">
+              <span>#{item.z}</span>
+              <Pill color={blocColor}>{item.bloc}</Pill>
+            </div>
+            <div className="mini-symbol">{item.sym}</div>
+            <h3>{item.name}</h3>
+            <p>{item.grp}</p>
+            <LineText text={item.util} />
+            <div className="pill-row compact">
+              {item.sectors.slice(0, 5).map(s => <Pill key={s} color={sectorColors[s]} title={sectorLabels[s]}>{s}</Pill>)}
+              {item.sectors.length > 5 ? <Pill muted>+{item.sectors.length - 5}</Pill> : null}
+            </div>
+          </article>
+        );
+      })}
+      {!rows.length && <div className="empty-results full">Aucune carte à afficher.</div>}
+    </div>
+  );
+}
+
+function MatrixView({ rows, sectors, sectorLabels, sectorColors, selected, setSelected }) {
+  return (
+    <div className="matrix-shell">
+      <table className="matrix-table">
+        <thead>
+          <tr>
+            <th className="matrix-name">Entrée</th>
+            {sectors.map(s => <th key={s} title={sectorLabels[s]} style={{ "--sector": sectorColors[s] }}>{s}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(item => {
+            const active = selected?.z === item.z && selected?.sym === item.sym && selected?.name === item.name;
+            return (
+              <tr key={`${item.z}-${item.sym}-${item.name}`} className={active ? "selected" : ""} onClick={() => setSelected(item)}>
+                <td className="matrix-name"><b>{item.sym}</b><span>{item.name}</span></td>
+                {sectors.map(s => {
+                  const has = item.sectors.includes(s);
+                  return <td key={s}><span className={has ? "dot on" : "dot"} title={has ? sectorLabels[s] : ""} style={{ "--sector": sectorColors[s] }}>{has ? "" : ""}</span></td>;
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {!rows.length && <div className="empty-results">Aucune correspondance matricielle.</div>}
+    </div>
+  );
+}
+
+function StatsView({ stats, sectors, sectorLabels, sectorColors, isChem, filtersCount }) {
+  const topRoles = Object.entries(stats.roleCounts).sort((a, b) => b[1] - a[1]);
+  return (
+    <div className="stats-view">
+      <div className="metrics-grid">
+        <MetricCard label="entrées affichées" value={stats.total} accent={ORIC.glow} />
+        <MetricCard label="secteurs / entrée" value={stats.avgSectors} accent={ORIC.blue} />
+        <MetricCard label={isChem ? "type épistémique" : "méta-notation"} value={stats.specialCount} accent={ORIC.gold} />
+        <MetricCard label="filtres actifs" value={filtersCount} accent={ORIC.violet} />
+      </div>
+      <div className="bars-grid">
+        <section className="bars-card">
+          <h3>Distribution par secteur</h3>
+          {sectors.map(s => {
+            const count = stats.sectorCounts[s] || 0;
+            const pct = stats.total ? Math.round((count / stats.total) * 100) : 0;
+            return (
+              <div className="bar-row" key={s}>
+                <span className="bar-label" title={sectorLabels[s]} style={{ color: sectorColors[s] }}>{s}</span>
+                <div className="bar-track"><i style={{ width: `${pct}%`, background: sectorColors[s] }} /></div>
+                <span className="bar-count">{count}</span>
+              </div>
+            );
+          })}
+        </section>
+        <section className="bars-card">
+          <h3>Distribution par rôle</h3>
+          {topRoles.map(([r, count]) => {
+            const pct = stats.total ? Math.round((count / stats.total) * 100) : 0;
+            return (
+              <div className="bar-row" key={r}>
+                <span className="bar-label role" title={roleLabel(r)}>{compactLabel(roleLabel(r), 15)}</span>
+                <div className="bar-track"><i style={{ width: `${pct}%`, background: ORIC.violet }} /></div>
+                <span className="bar-count">{count}</span>
+              </div>
+            );
+          })}
+        </section>
+      </div>
+    </div>
+  );
+}
 
 // ─── MAIN APP ───────────────────────────────────────────────────────────────
 function App() {
@@ -234,319 +544,182 @@ function App() {
   const [selSectors, setSelSectors] = useState([]);
   const [selRoles, setSelRoles] = useState([]);
   const [selTypes, setSelTypes] = useState([]);
-  const [expanded, setExpanded] = useState(null);
-  const [showGuide, setShowGuide] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   const isChem = tab === "chem";
   const data = isChem ? chemElements : mathSymbols;
   const sectors = isChem ? CHEM_SECTORS : MATH_SECTORS;
   const sectorLabels = isChem ? CHEM_SECTOR_LABELS : MATH_SECTOR_LABELS;
   const sectorColors = isChem ? SECTOR_COLORS_CHEM : SECTOR_COLORS_MATH;
-  const blocs = [...new Set(data.map(d => d.bloc))];
+  const blocs = useMemo(() => [...new Set(data.map(d => d.bloc))], [data]);
+  const roles = useMemo(() => [...new Set(data.flatMap(d => d.roles))], [data]);
 
-  const toggle = (arr, setArr, v) => setArr(prev => prev.includes(v) ? prev.filter(x=>x!==v) : [...prev, v]);
+  const resetFilters = () => {
+    setSearch(""); setSelBlocs([]); setSelSectors([]); setSelRoles([]); setSelTypes([]);
+  };
+
+  const switchTab = (next) => {
+    setTab(next);
+    setSelected(null);
+    setSortKey("z");
+    setSortAsc(true);
+    resetFilters();
+  };
+
+  const toggle = (setter, value) => setter(prev => prev.includes(value) ? prev.filter(x => x !== value) : [...prev, value]);
 
   const filtered = useMemo(() => {
-    let f = data;
-    if (search) {
-      const s = search.toLowerCase();
-      f = f.filter(d => d.sym.toLowerCase().includes(s) || d.name.toLowerCase().includes(s) || String(d.z).includes(s));
-    }
-    if (selBlocs.length) f = f.filter(d => selBlocs.includes(d.bloc));
-    if (selSectors.length) f = f.filter(d => d.sectors.some(s => selSectors.includes(s)));
-    if (selRoles.length) f = f.filter(d => d.roles.some(r => selRoles.includes(r)));
-    if (isChem && selTypes.length) f = f.filter(d => selTypes.includes(d.type));
-
-    f = [...f].sort((a,b) => {
-      let va = a[sortKey], vb = b[sortKey];
-      if (sortKey === "z") return sortAsc ? va - vb : vb - va;
-      if (typeof va === "string") return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
-      return 0;
+    const needle = search.trim().toLowerCase();
+    let rows = data.filter(item => {
+      if (needle && !itemSearchBlob(item, sectorLabels).includes(needle)) return false;
+      if (selBlocs.length && !selBlocs.includes(item.bloc)) return false;
+      if (selSectors.length && !item.sectors.some(s => selSectors.includes(s))) return false;
+      if (selRoles.length && !item.roles.some(r => selRoles.includes(r))) return false;
+      if (isChem && selTypes.length && !selTypes.includes(item.type)) return false;
+      return true;
     });
-    return f;
-  }, [data, search, selBlocs, selSectors, selRoles, selTypes, sortKey, sortAsc, isChem]);
+    rows = rows.slice().sort((a, b) => {
+      let av = a[sortKey], bv = b[sortKey];
+      if (sortKey === "sectors") { av = a.sectors.length; bv = b.sectors.length; }
+      if (sortKey === "roles") { av = a.roles.length; bv = b.roles.length; }
+      if (typeof av === "number" && typeof bv === "number") return sortAsc ? av - bv : bv - av;
+      return sortAsc ? String(av).localeCompare(String(bv), "fr") : String(bv).localeCompare(String(av), "fr");
+    });
+    return rows;
+  }, [data, sectorLabels, search, selBlocs, selSectors, selRoles, selTypes, isChem, sortKey, sortAsc]);
 
-  const handleSort = useCallback((key) => {
-    if (sortKey === key) setSortAsc(!sortAsc);
-    else { setSortKey(key); setSortAsc(true); }
-  }, [sortKey, sortAsc]);
-
-  const clearFilters = () => { setSelBlocs([]); setSelSectors([]); setSelRoles([]); setSelTypes([]); setSearch(""); };
-
-  // Stats
   const stats = useMemo(() => {
-    const sectorCounts = {};
-    sectors.forEach(s => { sectorCounts[s] = filtered.filter(d => d.sectors.includes(s)).length; });
+    const sectorCounts = Object.fromEntries(sectors.map(s => [s, 0]));
     const roleCounts = {};
-    (isChem ? CHEM_ROLES : MATH_ROLES).forEach(r => { roleCounts[r] = filtered.filter(d => d.roles.includes(r)).length; });
-    const avgSectors = filtered.length ? (filtered.reduce((a,d) => a + d.sectors.length, 0) / filtered.length).toFixed(1) : 0;
-    const resOnly = filtered.filter(d => d.sectors.length === 1 && d.sectors[0] === (isChem ? "RES" : "META")).length;
-    return {sectorCounts, roleCounts, avgSectors, resOnly, total: filtered.length};
+    filtered.forEach(item => {
+      item.sectors.forEach(s => { sectorCounts[s] = (sectorCounts[s] || 0) + 1; });
+      item.roles.forEach(r => { roleCounts[r] = (roleCounts[r] || 0) + 1; });
+    });
+    const avg = filtered.length ? (filtered.reduce((sum, item) => sum + item.sectors.length, 0) / filtered.length).toFixed(1) : "0.0";
+    const specialCount = isChem
+      ? filtered.filter(item => item.type === "EPIST").length
+      : filtered.filter(item => item.sectors.includes("META")).length;
+    return { total: filtered.length, sectorCounts, roleCounts, avgSectors: avg, specialCount };
   }, [filtered, sectors, isChem]);
 
-  const SortHeader = ({k, children, w}) => (
-    <th onClick={() => handleSort(k)} style={{
-      padding:"10px 8px", textAlign:"left", cursor:"pointer", userSelect:"none",
-      fontSize:11, fontWeight:700, color:"#94a3b8", textTransform:"uppercase",
-      letterSpacing:.5, borderBottom:"2px solid #1e293b", width: w || "auto",
-      position:"sticky", top:0, background:"#0f172a", zIndex:2
-    }}>
-      {children} {sortKey === k ? (sortAsc ? "▲" : "▼") : ""}
-    </th>
-  );
+  const filtersCount = selBlocs.length + selSectors.length + selRoles.length + selTypes.length + (search.trim() ? 1 : 0);
+
+  const csvText = useMemo(() => {
+    const escape = value => `"${String(value ?? "").replaceAll('"', '""')}"`;
+    const headers = ["z", "symbole", "nom", "bloc", "groupe", "type", "secteurs", "roles", "utilisation", "epistemique"];
+    const lines = filtered.map(item => [
+      item.z, item.sym, item.name, item.bloc, item.grp, item.type || "",
+      item.sectors.join("|"), item.roles.map(roleLabel).join("|"), item.util, item.epist
+    ].map(escape).join(","));
+    return [headers.join(","), ...lines].join("\n");
+  }, [filtered]);
+
+  const handleCopyCsv = () => {
+    copyText(csvText).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    });
+  };
+
+  const currentSelected = selected && filtered.some(item => item.z === selected.z && item.sym === selected.sym && item.name === selected.name)
+    ? selected
+    : filtered[0] || null;
 
   return (
-    <div style={{
-      fontFamily:"'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif",
-      background:"#0a0f1a", color:"#e2e8f0", minHeight:"100vh", padding:0
-    }}>
-      {/* ─── HEADER ─── */}
-      <div style={{
-        background:"linear-gradient(135deg, #0f172a 0%, #1a1f3a 100%)",
-        borderBottom:"1px solid #1e293b", padding:"20px 24px 12px"
-      }}>
-        <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:12}}>
+    <div className="oric-app" id="tables">
+      <header className="app-hero">
+        <nav className="top-nav" aria-label="Navigation du tableau">
+          <a href="https://www.ori-c.be/" className="brand"><span />ORI-C</a>
+          <div className="nav-actions">
+            <a href="https://www.ori-c.be/ori-c-outils.html">Outils</a>
+            <a href="https://www.ori-c.be/ori-c-presentation.html">Cadre</a>
+          </div>
+        </nav>
+        <div className="hero-grid">
           <div>
-            <h1 style={{margin:0, fontSize:20, fontWeight:800, letterSpacing:-.5,
-              background:"linear-gradient(135deg, #60a5fa, #a78bfa)",
-              WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"
-            }}>Cohérence interne de la science expérimentale</h1>
-            <p style={{margin:"4px 0 0", fontSize:12, color:"#64748b"}}>
-              Daloze Didier — Tableaux normalisés · Navigation interactive
-            </p>
-          </div>
-          <div style={{display:"flex", gap:6}}>
-            <button onClick={() => setShowGuide(!showGuide)} style={{
-              padding:"6px 12px", borderRadius:8, fontSize:11, fontWeight:600,
-              border:"1px solid #334155", background: showGuide ? "#1e293b" : "transparent",
-              color:"#94a3b8", cursor:"pointer"
-            }}>📖 Guide</button>
-          </div>
-        </div>
-
-        {/* Tab selector */}
-        <div style={{display:"flex", gap:4, marginTop:12}}>
-          {[["chem","⚛ Éléments chimiques (Z=1→118)"],["math","∑ Grammaire mathématique"]].map(([k,l]) => (
-            <button key={k} onClick={() => { setTab(k); clearFilters(); setView("table"); }} style={{
-              padding:"8px 16px", borderRadius:"8px 8px 0 0", fontSize:12, fontWeight:700,
-              border: tab===k ? "1px solid #334155" : "1px solid transparent",
-              borderBottom: tab===k ? "1px solid #0f172a" : "none",
-              background: tab===k ? "#0f172a" : "transparent",
-              color: tab===k ? "#e2e8f0" : "#64748b", cursor:"pointer"
-            }}>{l}</button>
-          ))}
-        </div>
-      </div>
-
-      {/* ─── GUIDE PANEL ─── */}
-      {showGuide && (
-        <div style={{background:"#111827", borderBottom:"1px solid #1e293b", padding:"16px 24px"}}>
-          <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:16, fontSize:12, lineHeight:"18px"}}>
-            <div>
-              <h3 style={{margin:"0 0 8px", fontSize:13, color:"#60a5fa"}}>Tableau 1 — Global normalisé</h3>
-              <p style={{color:"#94a3b8", margin:0}}>Table canonique : couverture maximale, format stable. Base pour comparaison, tri, extension. Chaque ligne = unité comparable via le triptyque Utilisation / Usage épistémique / Multisecteurs.</p>
-            </div>
-            <div>
-              <h3 style={{margin:"0 0 8px", fontSize:13, color:"#a78bfa"}}>Tableau 2 — Extrait Bloc P</h3>
-              <p style={{color:"#94a3b8", margin:0}}>Extrait focal (groupes 13–18). Test de robustesse : semi-conducteurs, halogènes, gaz nobles, superlourds. Vérifie que le gabarit verbe-first / rôle-first reste stable.</p>
-            </div>
-            <div>
-              <h3 style={{margin:"0 0 8px", fontSize:13, color:"#f472b6"}}>Tableau 3 — Vue rapide (diagnostic)</h3>
-              <p style={{color:"#94a3b8", margin:0}}>Projection basse dimension. Détecte : sous-typage (nan), pollution de colonnes, hétérogénéité lexicale, densité sectorielle anormale.</p>
+            <p className="eyebrow">TABLEAU DE COHÉRENCE · VERSION ORI-C</p>
+            <h1>Explorer les correspondances entre usage, trace et connaissance.</h1>
+            <p className="lead">Une interface plus lisible pour parcourir les éléments chimiques et les symboles mathématiques selon leurs secteurs d’usage, leurs rôles épistémiques et leur fonction de modélisation.</p>
+            <div className="hero-actions">
+              <button type="button" onClick={() => document.getElementById("explorer")?.scrollIntoView({ behavior: "smooth" })}>Explorer le tableau</button>
+              <button type="button" className="ghost" onClick={handleCopyCsv}>{copied ? "CSV copié" : "Copier CSV filtré"}</button>
             </div>
           </div>
-          <div style={{marginTop:12, padding:"8px 12px", background:"#1e293b", borderRadius:8, fontSize:11, color:"#94a3b8"}}>
-            <strong style={{color:"#e2e8f0"}}>Protocole : </strong>
-            1. Référence sur le global → 2. Validation locale (extrait) → 3. Diagnostic (vue rapide) → 4. Correction par règles
+          <div className="hero-panel" aria-hidden="true">
+            <div className="orbit o1" />
+            <div className="orbit o2" />
+            <div className="core">Σ</div>
+            <span className="node n1" /><span className="node n2" /><span className="node n3" />
           </div>
         </div>
-      )}
+      </header>
 
-      {/* ─── TOOLBAR ─── */}
-      <div style={{padding:"12px 24px", borderBottom:"1px solid #1e293b", background:"#0f172a"}}>
-        <div style={{display:"flex", gap:8, alignItems:"center", marginBottom:8, flexWrap:"wrap"}}>
-          <input
-            value={search} onChange={e => setSearch(e.target.value)}
-            placeholder={isChem ? "Rechercher (symbole, nom, Z)…" : "Rechercher (symbole, nom)…"}
-            style={{
-              padding:"6px 12px", borderRadius:8, fontSize:12, width:220,
-              background:"#1e293b", border:"1px solid #334155", color:"#e2e8f0", outline:"none"
-            }}
+      <main className="workspace" id="explorer">
+        <section className="control-panel">
+          <div className="switch-row">
+            <div className="segments" role="tablist" aria-label="Jeu de données">
+              <SegmentButton active={isChem} onClick={() => switchTab("chem")}>Éléments chimiques</SegmentButton>
+              <SegmentButton active={!isChem} onClick={() => switchTab("math")}>Symboles mathématiques</SegmentButton>
+            </div>
+            <div className="segments small" aria-label="Mode d'affichage">
+              <SegmentButton active={view === "table"} onClick={() => setView("table")}>Table</SegmentButton>
+              <SegmentButton active={view === "cards"} onClick={() => setView("cards")}>Cartes</SegmentButton>
+              <SegmentButton active={view === "matrix"} onClick={() => setView("matrix")}>Matrice</SegmentButton>
+              <SegmentButton active={view === "stats"} onClick={() => setView("stats")}>Stats</SegmentButton>
+            </div>
+          </div>
+
+          <div className="search-row">
+            <label className="search-box">
+              <span>Recherche</span>
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Nom, symbole, secteur, rôle, usage, trace…"
+              />
+            </label>
+            <button type="button" className="clear-btn" onClick={resetFilters}>Réinitialiser</button>
+          </div>
+
+          <div className="filters-grid">
+            <FilterGroup title="Blocs" options={blocs} selected={selBlocs} onToggle={v => toggle(setSelBlocs, v)} colorMap={BLOC_COLORS} />
+            <FilterGroup title="Secteurs" options={sectors} selected={selSectors} onToggle={v => toggle(setSelSectors, v)} colorMap={sectorColors} labels={sectorLabels} />
+            <FilterGroup title="Rôles" options={roles} selected={selRoles} onToggle={v => toggle(setSelRoles, v)} colorMap={{}} labels={Object.fromEntries(roles.map(r => [r, roleLabel(r)]))} />
+            {isChem ? <FilterGroup title="Types" options={CHEM_TYPES} selected={selTypes} onToggle={v => toggle(setSelTypes, v)} colorMap={TYPE_COLORS} /> : null}
+          </div>
+
+          <ActiveFilters
+            filters={[
+              { label: "Recherche", count: search.trim() ? 1 : 0 },
+              { label: "Blocs", count: selBlocs.length },
+              { label: "Secteurs", count: selSectors.length },
+              { label: "Rôles", count: selRoles.length },
+              { label: "Types", count: selTypes.length }
+            ]}
+            onClear={resetFilters}
           />
-          <div style={{display:"flex", gap:4}}>
-            {["table","matrix","stats"].map(v => (
-              <button key={v} onClick={() => setView(v)} style={{
-                padding:"5px 12px", borderRadius:6, fontSize:11, fontWeight:600,
-                border:`1px solid ${view===v ? "#3b82f6" : "#334155"}`,
-                background: view===v ? "#3b82f620" : "transparent",
-                color: view===v ? "#60a5fa" : "#64748b", cursor:"pointer"
-              }}>{v === "table" ? "📋 Tableau" : v === "matrix" ? "🔢 Matrice" : "📊 Stats"}</button>
-            ))}
-          </div>
-          {(selBlocs.length || selSectors.length || selRoles.length || selTypes.length || search) ? (
-            <button onClick={clearFilters} style={{
-              padding:"5px 10px", borderRadius:6, fontSize:11, border:"1px solid #ef4444",
-              background:"transparent", color:"#ef4444", cursor:"pointer"
-            }}>✕ Réinitialiser</button>
-          ) : null}
-          <span style={{fontSize:11, color:"#64748b", marginLeft:"auto"}}>
-            {filtered.length} / {data.length} {isChem ? "éléments" : "symboles"}
-          </span>
-        </div>
+        </section>
 
-        <FilterBar label="Bloc" options={blocs} selected={selBlocs} onToggle={v => toggle(selBlocs, setSelBlocs, v)} colorMap={BLOC_COLORS} />
-        <FilterBar label="Secteurs" options={sectors} selected={selSectors} onToggle={v => toggle(selSectors, setSelSectors, v)} colorMap={sectorColors} />
-        <FilterBar label="Rôles" options={isChem ? CHEM_ROLES : MATH_ROLES} selected={selRoles} onToggle={v => toggle(selRoles, setSelRoles, v)} />
-        {isChem && <FilterBar label="Type" options={CHEM_TYPES} selected={selTypes} onToggle={v => toggle(selTypes, setSelTypes, v)} colorMap={TYPE_COLORS} />}
-      </div>
-
-      {/* ─── MAIN CONTENT ─── */}
-      <div style={{padding:"0 24px 24px"}}>
-        {view === "table" && (
-          <div style={{overflowX:"auto", marginTop:12}}>
-            <table style={{width:"100%", borderCollapse:"collapse", fontSize:12}}>
-              <thead>
-                <tr>
-                  <SortHeader k="z" w="50px">Z</SortHeader>
-                  <SortHeader k="sym" w="60px">Sym.</SortHeader>
-                  <SortHeader k="name" w="120px">Nom</SortHeader>
-                  <SortHeader k="bloc" w="50px">Bloc</SortHeader>
-                  <th style={{padding:"10px 8px",textAlign:"left",fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:.5,borderBottom:"2px solid #1e293b",position:"sticky",top:0,background:"#0f172a",zIndex:2,width:"28%"}}>Utilisation</th>
-                  <th style={{padding:"10px 8px",textAlign:"left",fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:.5,borderBottom:"2px solid #1e293b",position:"sticky",top:0,background:"#0f172a",zIndex:2,width:"28%"}}>Usage épistémique</th>
-                  <th style={{padding:"10px 8px",textAlign:"left",fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:.5,borderBottom:"2px solid #1e293b",position:"sticky",top:0,background:"#0f172a",zIndex:2}}>Multi­secteurs</th>
-                  <th style={{padding:"10px 8px",textAlign:"left",fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:.5,borderBottom:"2px solid #1e293b",position:"sticky",top:0,background:"#0f172a",zIndex:2}}>Rôles</th>
-                  {isChem && <th style={{padding:"10px 8px",textAlign:"left",fontSize:11,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:.5,borderBottom:"2px solid #1e293b",position:"sticky",top:0,background:"#0f172a",zIndex:2,width:60}}>Type</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((d, i) => {
-                  const isExp = expanded === d.z;
-                  return (
-                    <tr key={d.z} onClick={() => setExpanded(isExp ? null : d.z)} style={{
-                      cursor:"pointer", background: isExp ? "#1e293b" : i%2===0 ? "transparent" : "#0f172a08",
-                      borderBottom:"1px solid #1e293b", transition:"background .1s"
-                    }}>
-                      <td style={{padding:"8px",fontWeight:700,color:"#60a5fa",fontVariantNumeric:"tabular-nums"}}>{d.z}</td>
-                      <td style={{padding:"8px"}}>
-                        <span style={{
-                          display:"inline-flex",alignItems:"center",justifyContent:"center",
-                          width:36,height:36,borderRadius:8,fontWeight:800,fontSize:14,
-                          background:`${BLOC_COLORS[d.bloc]}15`,color:BLOC_COLORS[d.bloc],
-                          border:`1px solid ${BLOC_COLORS[d.bloc]}30`
-                        }}>{d.sym}</span>
-                      </td>
-                      <td style={{padding:"8px",fontWeight:500}}>{d.name}</td>
-                      <td style={{padding:"8px"}}><Pill label={d.bloc} color={BLOC_COLORS[d.bloc]} small /></td>
-                      <td style={{padding:"8px"}}><CellText text={d.util} /></td>
-                      <td style={{padding:"8px"}}><CellText text={d.epist} /></td>
-                      <td style={{padding:"8px"}}>
-                        {d.sectors.map(s => <Pill key={s} label={s} color={sectorColors[s] || "#64748b"} small />)}
-                      </td>
-                      <td style={{padding:"8px"}}>
-                        {d.roles.map(r => <Pill key={r} label={isChem ? r.slice(0,3).toUpperCase() : r} color="#a78bfa" small />)}
-                      </td>
-                      {isChem && <td style={{padding:"8px"}}><Pill label={d.type} color={TYPE_COLORS[d.type]} small /></td>}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {view === "matrix" && (
-          <div style={{overflowX:"auto", marginTop:12}}>
-            <h3 style={{fontSize:14,fontWeight:700,color:"#94a3b8",marginBottom:8}}>
-              Matrice d'incidence — {isChem ? "Éléments × Secteurs" : "Symboles × Secteurs"}
-            </h3>
-            <table style={{borderCollapse:"collapse",fontSize:11}}>
-              <thead>
-                <tr>
-                  <th style={{padding:"4px 8px",position:"sticky",left:0,background:"#0f172a",zIndex:3,borderBottom:"2px solid #1e293b",color:"#94a3b8",fontSize:10}}>Z</th>
-                  <th style={{padding:"4px 8px",position:"sticky",left:40,background:"#0f172a",zIndex:3,borderBottom:"2px solid #1e293b",color:"#94a3b8",fontSize:10}}>Sym</th>
-                  {sectors.map(s => (
-                    <th key={s} style={{padding:"4px 6px",textAlign:"center",borderBottom:"2px solid #1e293b",color:sectorColors[s],fontSize:10,fontWeight:700,minWidth:36}}>{s}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((d,i) => (
-                  <tr key={d.z} style={{borderBottom:"1px solid #1e293b15"}}>
-                    <td style={{padding:"3px 8px",fontWeight:600,color:"#60a5fa",position:"sticky",left:0,background:"#0f172a",fontSize:10}}>{d.z}</td>
-                    <td style={{padding:"3px 8px",fontWeight:700,position:"sticky",left:40,background:"#0f172a",fontSize:10}}>{d.sym}</td>
-                    {sectors.map(s => {
-                      const has = d.sectors.includes(s);
-                      return (
-                        <td key={s} style={{textAlign:"center",padding:"3px"}}>
-                          <div style={{
-                            width:20,height:20,borderRadius:4,margin:"0 auto",
-                            background: has ? `${sectorColors[s]}30` : "transparent",
-                            border: has ? `1px solid ${sectorColors[s]}50` : "1px solid #1e293b30",
-                            display:"flex",alignItems:"center",justifyContent:"center",
-                            fontSize:10,fontWeight:800,color: has ? sectorColors[s] : "transparent"
-                          }}>{has ? "1" : ""}</div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {view === "stats" && (
-          <div style={{marginTop:16}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:12,marginBottom:20}}>
-              {[
-                {label:"Éléments affichés",value:stats.total,color:"#60a5fa"},
-                {label:"Moy. secteurs/élément",value:stats.avgSectors,color:"#a78bfa"},
-                {label:isChem ? "RES uniquement" : "META uniquement",value:stats.resOnly,color:"#64748b"},
-                {label:"Filtres actifs",value:selBlocs.length+selSectors.length+selRoles.length+selTypes.length,color:"#f59e0b"},
-              ].map((s,i) => (
-                <div key={i} style={{background:"#111827",borderRadius:12,padding:"16px",border:"1px solid #1e293b"}}>
-                  <div style={{fontSize:28,fontWeight:800,color:s.color}}>{s.value}</div>
-                  <div style={{fontSize:11,color:"#64748b",marginTop:4}}>{s.label}</div>
-                </div>
-              ))}
+        <section className="content-grid">
+          <div className="results-panel">
+            <div className="results-head">
+              <div>
+                <p>{isChem ? "Chimie" : "Mathématiques"}</p>
+                <h2>{filtered.length} entrée{filtered.length > 1 ? "s" : ""} affichée{filtered.length > 1 ? "s" : ""}</h2>
+              </div>
+              <button type="button" className="copy-btn" onClick={handleCopyCsv}>{copied ? "Copié" : "Copier CSV"}</button>
             </div>
 
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-              <div style={{background:"#111827",borderRadius:12,padding:16,border:"1px solid #1e293b"}}>
-                <h4 style={{margin:"0 0 12px",fontSize:13,color:"#94a3b8"}}>Distribution par secteur</h4>
-                {sectors.map(s => {
-                  const c = stats.sectorCounts[s] || 0;
-                  const pct = stats.total ? (c / stats.total * 100) : 0;
-                  return (
-                    <div key={s} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                      <span style={{width:40,fontSize:10,fontWeight:700,color:sectorColors[s],textAlign:"right"}}>{s}</span>
-                      <div style={{flex:1,height:16,background:"#1e293b",borderRadius:4,overflow:"hidden"}}>
-                        <div style={{width:`${pct}%`,height:"100%",background:`${sectorColors[s]}60`,borderRadius:4,transition:"width .3s"}} />
-                      </div>
-                      <span style={{width:30,fontSize:10,color:"#64748b",textAlign:"right"}}>{c}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{background:"#111827",borderRadius:12,padding:16,border:"1px solid #1e293b"}}>
-                <h4 style={{margin:"0 0 12px",fontSize:13,color:"#94a3b8"}}>Distribution par rôle épistémique</h4>
-                {Object.entries(stats.roleCounts).map(([r,c]) => {
-                  const pct = stats.total ? (c / stats.total * 100) : 0;
-                  return (
-                    <div key={r} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                      <span style={{width:80,fontSize:10,fontWeight:600,color:"#a78bfa",textAlign:"right"}}>{r}</span>
-                      <div style={{flex:1,height:16,background:"#1e293b",borderRadius:4,overflow:"hidden"}}>
-                        <div style={{width:`${pct}%`,height:"100%",background:"#a78bfa40",borderRadius:4,transition:"width .3s"}} />
-                      </div>
-                      <span style={{width:30,fontSize:10,color:"#64748b",textAlign:"right"}}>{c}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            {view === "table" ? <TableView rows={filtered} selected={currentSelected} setSelected={setSelected} isChem={isChem} sectorLabels={sectorLabels} sectorColors={sectorColors} sortKey={sortKey} setSortKey={setSortKey} sortAsc={sortAsc} setSortAsc={setSortAsc} /> : null}
+            {view === "cards" ? <CardView rows={filtered} selected={currentSelected} setSelected={setSelected} sectorLabels={sectorLabels} sectorColors={sectorColors} /> : null}
+            {view === "matrix" ? <MatrixView rows={filtered} sectors={sectors} sectorLabels={sectorLabels} sectorColors={sectorColors} selected={currentSelected} setSelected={setSelected} /> : null}
+            {view === "stats" ? <StatsView stats={stats} sectors={sectors} sectorLabels={sectorLabels} sectorColors={sectorColors} isChem={isChem} filtersCount={filtersCount} /> : null}
           </div>
-        )}
-      </div>
+
+          <DetailPanel item={currentSelected} isChem={isChem} sectorLabels={sectorLabels} sectorColors={sectorColors} />
+        </section>
+      </main>
     </div>
   );
 }

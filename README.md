@@ -1,21 +1,51 @@
-# Démo HTML (GitHub Pages)
+# ORI-C — Tableau de cohérence interactif
 
-Ce dossier contient une démo autonome (sans bundler) pour afficher `coherence_science_interactive.jsx`
-directement sur GitHub Pages.
+Interface GitHub Pages pour explorer les correspondances entre éléments chimiques, symboles mathématiques, secteurs d’usage et rôles épistémiques.
 
-## Contenu
-- `docs/index.html` : page GitHub Pages
-- `docs/app.jsx` : composant React adapté pour Babel Standalone (pas d'import/export)
+## Page publique
 
-## Mise en ligne sur GitHub Pages
-1) Copie le dossier `docs/` à la racine de ton repo GitHub
-2) GitHub → Settings → Pages
-   - Source: Deploy from a branch
-   - Branch: main
-   - Folder: /docs
-3) URL attendue:
-   https://<user>.github.io/<repo>/
+Le tableau est servi depuis :
 
-## Notes
-- Cette approche utilise Babel dans le navigateur: parfaite pour démo, pas pour production.
-- Si tu veux une version "pro", on passe à Vite + build.
+```text
+/docs/index.html
+```
+
+La page est volontairement autonome : plus de React/Babel obligatoire pour afficher le tableau. Elle charge les CSV, construit les filtres, puis affiche les vues directement en JavaScript natif.
+
+## Améliorations interface
+
+- Palette ORI-C : noir végétal, vert vivant, doré, bleu et violet.
+- Recherche élargie : nom, symbole, bloc, groupe, secteur, usage, trace et lecture épistémique.
+- Filtres croisés : blocs, secteurs, rôles déduits.
+- Vues multiples : table, cartes, matrice, statistiques.
+- Fiche détail au clic.
+- Export rapide : copie CSV du résultat filtré.
+- Interface responsive ordinateur/mobile.
+
+## Données
+
+- `chemical_elements.csv`
+- `math_symbols.csv`
+
+La page essaie d’abord de charger les CSV locaux depuis `/docs`. Si besoin, elle bascule vers les fichiers bruts du repo GitHub.
+
+## GitHub Pages
+
+Dans GitHub :
+
+1. `Settings` → `Pages`
+2. Source : `Deploy from a branch`
+3. Branch : `main`
+4. Folder : `/docs`
+
+URL attendue :
+
+```text
+https://dalozedidier-dot.github.io/coherence-tables/
+```
+
+## Tests Python
+
+```bash
+PYTHONPATH=src pytest
+```
